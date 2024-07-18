@@ -19,7 +19,6 @@ enum Keyword {
     // conditional
     If,
     Else,
-    ElseIf,
     While,
     For,
     In,
@@ -32,9 +31,11 @@ enum Operator {
 
     Add,
     AddAssign,
+    Increment,
 
     Subtract,
     SubAssing,
+    Decrement,
 
     Multiply,
     MulAssign,
@@ -73,8 +74,6 @@ enum Bracket {
     SquareClose,
     CurlyOpen,
     CurlyClose,
-    AngleOpen,
-    AngleClose,
 }
 
 enum Literal {
@@ -87,13 +86,81 @@ enum Literal {
     Array(Vec<Literal>),
 }
 
-enum Tokens {
+enum Token {
     KeywordToken(Keyword),
     OperatorToken(Operator),
     BracketToken(Bracket),
     LiteralToken(Literal),
+    End,
+}
+
+impl From<&str> for Token {
+    fn from(value: &str) -> Self {
+        match value {
+            "import" => Self::KeywordToken(Keyword::Import),
+            "struct" => Self::KeywordToken(Keyword::Struct),
+            "return" => Self::KeywordToken(Keyword::Return),
+            "i8" => Self::KeywordToken(Keyword::SignedInteger8),
+            "i16" => Self::KeywordToken(Keyword::SignedInteger16),
+            "i32" => Self::KeywordToken(Keyword::SignedInteger32),
+            "i64" => Self::KeywordToken(Keyword::SignedInteger64),
+            "u8" => Self::KeywordToken(Keyword::UnsignedInteger8),
+            "u16" => Self::KeywordToken(Keyword::UnsignedInteger16),
+            "u32" => Self::KeywordToken(Keyword::UnsignedInteger32),
+            "u64" => Self::KeywordToken(Keyword::UnsignedInteger64),
+            "char" => Self::KeywordToken(Keyword::Character),
+            "bool" => Self::KeywordToken(Keyword::Boolean),
+            "if" => Self::KeywordToken(Keyword::If),
+            "else" => Self::KeywordToken(Keyword::Else),
+            "while" => Self::KeywordToken(Keyword::While),
+            "for" => Self::KeywordToken(Keyword::For),
+            "in" => Self::KeywordToken(Keyword::In),
+            "break" => Self::KeywordToken(Keyword::Break),
+            "continue" => Self::KeywordToken(Keyword::Continue),
+            "=" => todo!(),
+            "+" => todo!(),
+            "+=" => todo!(),
+            "++" => todo!(),
+            "-" => todo!(),
+            "-=" => todo!(),
+            "--" => todo!(),
+            "*" => todo!(),
+            "*=" => todo!(),
+            "/" => todo!(),
+            "/=" => todo!(),
+            "%" => todo!(),
+            "%=" => todo!(),
+            "&" => todo!(),
+            "&=" => todo!(),
+            "|" => todo!(),
+            "|=" => todo!(),
+            "~" => todo!(),
+            "&&" => todo!(),
+            "||" => todo!(),
+            "!" => todo!(),
+            "==" => todo!(),
+            "!=" => todo!(),
+            "<" => todo!(),
+            ">" => todo!(),
+            "<=" => todo!(),
+            ">=" => todo!(),
+            "(" => todo!(),
+            ")" => todo!(),
+            "[" => todo!(),
+            "]" => todo!(),
+            "{" => todo!(),
+            "}" => todo!(),
+            other => Self::LiteralToken(Literal::from(other)),
+        }
+    }
+}
+
+fn parse(file: &str) -> Vec<Token> {
+    let mut tokens = Vec::new();
+
+    tokens
 }
 
 fn main() {
-    println!("Hello, world!");
+    println!("return, world!");
 }
