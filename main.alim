@@ -1,3 +1,9 @@
+struct Abc {
+	char b;
+}
+
 i32 main() {
-	println('\'');
+	Abc def = Abc { b = 'c' };
+	print(def.b);
+	return 0;
 }

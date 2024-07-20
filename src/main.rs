@@ -83,8 +83,7 @@ enum Bracket {
 
 #[derive(Debug)]
 enum Literal {
-    Integer(i32),
-    BigInteger(i128),
+    Integer(i128),
     Float(f64),
     Character(char),
     Array(Vec<Literal>),
@@ -95,10 +94,8 @@ impl TryFrom<&str> for Literal {
     type Error = ();
 
     fn try_from(value: &str) -> Result<Self, ()> {
-        if let Ok(i) = value.parse::<i32>() {
+        if let Ok(i) = value.parse::<i128>() {
             Ok(Self::Integer(i))
-        } else if let Ok(i) = value.parse::<i128>() {
-            Ok(Self::BigInteger(i))
         } else if let Ok(i) = value.parse::<f64>() {
             Ok(Self::Float(i))
         } else if value.starts_with('\'') && value.ends_with('\'') {
@@ -122,6 +119,7 @@ impl TryFrom<&str> for Literal {
             }
         } else if value.starts_with('[') && value.ends_with(']') {
             todo!()
+            // parse_array(value[1..value.len() - 1])
         } else {
             let mut valid_first_character: Vec<char> = ('A'..='Z').chain('a'..='z').collect();
             valid_first_character.push('_');
@@ -144,6 +142,7 @@ impl TryFrom<&str> for Literal {
 #[derive(Debug)]
 enum Symbol {
     End,
+    Get,
     Seperator,
 }
 
@@ -217,12 +216,13 @@ impl TryFrom<&str> for Token {
             "}" => Ok(Self::BracketToken(Bracket::CurlyClose)),
             ";" => Ok(Self::SymbolToken(Symbol::End)),
             "," => Ok(Self::SymbolToken(Symbol::Seperator)),
+            "." => Ok(Self::SymbolToken(Symbol::Get)),
             other => Ok(Self::LiteralToken(Literal::try_from(other)?)),
         }
     }
 }
 
-fn parse(file: &str) -> Vec<Token> {
+fn tokeniser(file: &str) -> Vec<Token> {
     let mut iterator = file.chars().peekable();
 
     let mut tokens = Vec::new();
@@ -243,8 +243,50 @@ fn parse(file: &str) -> Vec<Token> {
 
         current_token.push(i);
 
+        match i {
+            '\'' => {
+                if in_char && prev_chr != '\\' {
+                    tokens.push(current_token.as_str().try_into().unwrap());
+
+                    current_token.clear();
+                    in_char = false;
+                } else {
+                    in_char = true;
+                }
+
+                continue;
+            }
+
+            '-' => {
+                if let (Some(Token::LiteralToken(_)), Some(i)) = (tokens.last(), iterator.peek()) {
+                    if i.is_ascii_alphanumeric() {
+                        tokens.push(current_token.as_str().try_into().unwrap());
+                        current_token.clear();
+                    }
+                }
+            }
+
+            '.' => {
+                if let (Some(i), Some(j)) = (tokens.last(), iterator.peek()) {
+                    let valid = match i {
+                        Token::BracketToken(Bracket::RoundClose) => true,
+                        Token::LiteralToken(Literal::Identifier(_)) => true,
+                        _ => false,
+                    };
+
+                    if valid && j.is_ascii_alphabetic() {
+                        tokens.push(current_token.as_str().try_into().unwrap());
+                        current_token.clear();
+                    }
+                }
+            }
+
+            _ => (),
+        }
+
         if !in_char {
             if Token::try_from(current_token.as_str()).is_err() {
+                println!("{current_token:?}");
                 current_token.pop();
 
                 tokens.push(current_token.as_str().try_into().unwrap());
@@ -255,31 +297,7 @@ fn parse(file: &str) -> Vec<Token> {
                 }
             }
         }
-
-        if i == '\'' {
-            if in_char && prev_chr != '\\' {
-                tokens.push(current_token.as_str().try_into().unwrap());
-
-                current_token.clear();
-                in_char = false;
-            } else {
-                in_char = true;
-            }
-        }
-
-        if current_token == "-" {
-            if let (Some(Token::LiteralToken(_)), Some(i)) = (tokens.last(), iterator.peek()) {
-                if !i.is_ascii_alphanumeric() {
-                    continue;
-                }
-
-                tokens.push(current_token.as_str().try_into().unwrap());
-                current_token.clear();
-            }
-        }
-
         prev_chr = i;
-        println!("{:?}", current_token);
     }
 
     if !current_token.is_empty() {
@@ -291,6 +309,6 @@ fn parse(file: &str) -> Vec<Token> {
 
 fn main() {
     let buffer = read_to_string("./main.alim").unwrap();
-    let tokens = parse(&buffer);
+    let tokens = tokeniser(&buffer);
     println!("{:#?}", tokens);
 }

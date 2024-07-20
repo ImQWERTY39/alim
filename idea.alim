@@ -58,4 +58,5 @@ i32 main() {
 
 /*
 doubly linked list for storing scopes
+test programs in ./tests
 */
