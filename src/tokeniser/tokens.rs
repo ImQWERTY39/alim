@@ -31,6 +31,7 @@ impl TryFrom<&str> for Token {
             "f64" => Ok(Self::KeywordToken(Keyword::Float64)),
             "char" => Ok(Self::KeywordToken(Keyword::Character)),
             "bool" => Ok(Self::KeywordToken(Keyword::Boolean)),
+            "const" => Ok(Self::KeywordToken(Keyword::Constant)),
             "if" => Ok(Self::KeywordToken(Keyword::If)),
             "else" => Ok(Self::KeywordToken(Keyword::Else)),
             "while" => Ok(Self::KeywordToken(Keyword::While)),

@@ -1,6 +1,11 @@
+use std::fs::read_to_string;
 mod tokeniser;
 
-fn main() {}
+fn main() {
+    let buffer = read_to_string("./tests/test4.alim").unwrap();
+    let tokens = tokeniser::tokeniser(&buffer);
+    println!("{tokens:#?}")
+}
 
 #[cfg(test)]
 mod test {

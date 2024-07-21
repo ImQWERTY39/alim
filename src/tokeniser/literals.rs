@@ -18,11 +18,7 @@ impl TryFrom<&str> for Literal {
         } else if value.starts_with('\'') && value.ends_with('\'') {
             if value.len() == 3 {
                 Ok(Self::Character(value.chars().nth(1).unwrap()))
-            } else {
-                if !value.starts_with("'\\") {
-                    return Err(());
-                }
-
+            } else if value.len() == 4 && value.starts_with("'\\") {
                 match value.chars().nth(2).unwrap() {
                     'n' => Ok(Self::Character('\n')),
                     'r' => Ok(Self::Character('\r')),
@@ -33,10 +29,19 @@ impl TryFrom<&str> for Literal {
                     '"' => Ok(Self::Character('\"')),
                     _ => Err(()),
                 }
+            } else {
+                Err(())
             }
         } else if value.starts_with('[') && value.ends_with(']') {
             todo!()
             // parse_array(value[1..value.len() - 1])
+        } else if value.starts_with('"') && value.ends_with('"') {
+            Ok(Literal::Array(
+                value[1..value.len() - 1]
+                    .chars()
+                    .map(|x| Literal::Character(x))
+                    .collect(),
+            ))
         } else {
             let mut valid_first_character: Vec<char> = ('A'..='Z').chain('a'..='z').collect();
             valid_first_character.push('_');

@@ -18,6 +18,7 @@ pub enum Keyword {
     Float64,
     Character,
     Boolean,
+    Constant,
 
     // bool stuff
     True,

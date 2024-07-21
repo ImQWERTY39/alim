@@ -16,7 +16,11 @@ pub fn tokeniser(file: &str) -> Vec<Token> {
     let mut current_token = String::new();
 
     let mut in_char = false;
+    let mut in_str = false;
     let mut prev_chr = '\0';
+
+    // let mut in_line_comment = false;
+    // let mut in_mulline_comment = false;
 
     while let Some(i) = iterator.next() {
         if i.is_whitespace() && !in_char {
@@ -39,6 +43,19 @@ pub fn tokeniser(file: &str) -> Vec<Token> {
                     in_char = false;
                 } else {
                     in_char = true;
+                }
+
+                continue;
+            }
+
+            '"' => {
+                if in_str && prev_chr != '\\' {
+                    tokens.push(current_token.as_str().try_into().unwrap());
+
+                    current_token.clear();
+                    in_str = false;
+                } else {
+                    in_str = true;
                 }
 
                 continue;
@@ -73,16 +90,18 @@ pub fn tokeniser(file: &str) -> Vec<Token> {
             _ => (),
         }
 
-        if !in_char {
-            if Token::try_from(current_token.as_str()).is_err() {
-                current_token.pop();
+        if in_char || in_str {
+            continue;
+        }
 
-                tokens.push(current_token.as_str().try_into().unwrap());
-                current_token.clear();
+        if Token::try_from(current_token.as_str()).is_err() {
+            current_token.pop();
 
-                if i != ' ' {
-                    current_token.push(i);
-                }
+            tokens.push(current_token.as_str().try_into().unwrap());
+            current_token.clear();
+
+            if i != ' ' {
+                current_token.push(i);
             }
         }
 

@@ -1,0 +1,15 @@
+import math;
+
+struct Person {
+	const char[40] name;
+	u8 age;
+}
+
+i32 main() {
+	Person p = Person {
+		name = "abc",
+		age = 10,
+	};
+
+	print(-(4 + 5));
+}
