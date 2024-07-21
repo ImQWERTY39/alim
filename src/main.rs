@@ -1,314 +1,193 @@
-use std::fs::read_to_string;
+mod tokeniser;
 
-#[derive(Debug)]
-enum Keyword {
-    // random keywords
-    Import,
-    Struct,
-    Return,
+fn main() {}
 
-    // types
-    SignedInteger8,
-    SignedInteger16,
-    SignedInteger32,
-    SignedInteger64,
-    UnsignedInteger8,
-    UnsignedInteger16,
-    UnsignedInteger32,
-    UnsignedInteger64,
-    Float32,
-    Float64,
-    Character,
-    Boolean,
+#[cfg(test)]
+mod test {
+    use crate::tokeniser::{
+        brackets::Bracket, keywords::Keyword, literals::Literal, operators::Operator,
+        symbols::Symbol, tokens::Token,
+    };
 
-    True,
-    False,
+    use super::*;
+    use std::fs::read_to_string;
 
-    // conditional
-    If,
-    Else,
-    While,
-    For,
-    In,
-    Break,
-    Continue,
-}
+    #[test]
+    fn basic() {
+        let buffer = read_to_string("./tests/test1.alim").unwrap();
+        let tokens = tokeniser::tokeniser(&buffer);
 
-#[derive(Debug)]
-enum Operator {
-    Assign,
-
-    Add,
-    AddAssign,
-
-    Subtract,
-    SubAssign,
-
-    Multiply,
-    MulAssign,
-
-    Divide,
-    DivAssign,
-
-    Modulus,
-    ModAssign,
-
-    BitAnd,
-    BitAndAssign,
-
-    BitOr,
-    BitOrAssign,
-
-    And,
-    Or,
-    Not,
-
-    Equal,
-    NotEqual,
-    LessThan,
-    LessThanEqual,
-    GreaterThan,
-    GreaterThanEqual,
-}
-
-#[derive(Debug)]
-enum Bracket {
-    RoundOpen,
-    RoundClose,
-    SquareOpen,
-    SquareClose,
-    CurlyOpen,
-    CurlyClose,
-}
-
-#[derive(Debug)]
-enum Literal {
-    Integer(i128),
-    Float(f64),
-    Character(char),
-    Array(Vec<Literal>),
-    Identifier(Box<str>),
-}
-
-impl TryFrom<&str> for Literal {
-    type Error = ();
-
-    fn try_from(value: &str) -> Result<Self, ()> {
-        if let Ok(i) = value.parse::<i128>() {
-            Ok(Self::Integer(i))
-        } else if let Ok(i) = value.parse::<f64>() {
-            Ok(Self::Float(i))
-        } else if value.starts_with('\'') && value.ends_with('\'') {
-            if value.len() == 3 {
-                Ok(Self::Character(value.chars().nth(1).unwrap()))
-            } else {
-                if !value.starts_with("'\\") {
-                    return Err(());
-                }
-
-                match value.chars().nth(2).unwrap() {
-                    'n' => Ok(Self::Character('\n')),
-                    'r' => Ok(Self::Character('\r')),
-                    't' => Ok(Self::Character('\t')),
-                    '\\' => Ok(Self::Character('\\')),
-                    '0' => Ok(Self::Character('\0')),
-                    '\'' => Ok(Self::Character('\'')),
-                    '"' => Ok(Self::Character('\"')),
-                    _ => Err(()),
-                }
-            }
-        } else if value.starts_with('[') && value.ends_with(']') {
-            todo!()
-            // parse_array(value[1..value.len() - 1])
-        } else {
-            let mut valid_first_character: Vec<char> = ('A'..='Z').chain('a'..='z').collect();
-            valid_first_character.push('_');
-
-            if !valid_first_character.contains(&value.chars().next().ok_or(())?) {
-                return Err(());
-            }
-
-            valid_first_character.extend('0'..='9');
-
-            if !value.chars().all(|x| valid_first_character.contains(&x)) {
-                return Err(());
-            }
-
-            Ok(Self::Identifier(value.into()))
-        }
-    }
-}
-
-#[derive(Debug)]
-enum Symbol {
-    End,
-    Get,
-    Seperator,
-}
-
-#[derive(Debug)]
-enum Token {
-    KeywordToken(Keyword),
-    OperatorToken(Operator),
-    BracketToken(Bracket),
-    LiteralToken(Literal),
-    SymbolToken(Symbol),
-}
-
-impl TryFrom<&str> for Token {
-    type Error = ();
-
-    fn try_from(value: &str) -> Result<Self, ()> {
-        match value {
-            "import" => Ok(Self::KeywordToken(Keyword::Import)),
-            "struct" => Ok(Self::KeywordToken(Keyword::Struct)),
-            "return" => Ok(Self::KeywordToken(Keyword::Return)),
-            "i8" => Ok(Self::KeywordToken(Keyword::SignedInteger8)),
-            "i16" => Ok(Self::KeywordToken(Keyword::SignedInteger16)),
-            "i32" => Ok(Self::KeywordToken(Keyword::SignedInteger32)),
-            "i64" => Ok(Self::KeywordToken(Keyword::SignedInteger64)),
-            "u8" => Ok(Self::KeywordToken(Keyword::UnsignedInteger8)),
-            "u16" => Ok(Self::KeywordToken(Keyword::UnsignedInteger16)),
-            "u32" => Ok(Self::KeywordToken(Keyword::UnsignedInteger32)),
-            "u64" => Ok(Self::KeywordToken(Keyword::UnsignedInteger64)),
-            "f32" => Ok(Self::KeywordToken(Keyword::Float32)),
-            "f64" => Ok(Self::KeywordToken(Keyword::Float64)),
-            "char" => Ok(Self::KeywordToken(Keyword::Character)),
-            "bool" => Ok(Self::KeywordToken(Keyword::Boolean)),
-            "if" => Ok(Self::KeywordToken(Keyword::If)),
-            "else" => Ok(Self::KeywordToken(Keyword::Else)),
-            "while" => Ok(Self::KeywordToken(Keyword::While)),
-            "for" => Ok(Self::KeywordToken(Keyword::For)),
-            "in" => Ok(Self::KeywordToken(Keyword::In)),
-            "break" => Ok(Self::KeywordToken(Keyword::Break)),
-            "continue" => Ok(Self::KeywordToken(Keyword::Continue)),
-            "true" => Ok(Self::KeywordToken(Keyword::True)),
-            "false" => Ok(Self::KeywordToken(Keyword::False)),
-            "=" => Ok(Self::OperatorToken(Operator::Assign)),
-            "+" => Ok(Self::OperatorToken(Operator::Add)),
-            "+=" => Ok(Self::OperatorToken(Operator::AddAssign)),
-            "-" => Ok(Self::OperatorToken(Operator::Subtract)),
-            "-=" => Ok(Self::OperatorToken(Operator::SubAssign)),
-            "*" => Ok(Self::OperatorToken(Operator::Multiply)),
-            "*=" => Ok(Self::OperatorToken(Operator::MulAssign)),
-            "/" => Ok(Self::OperatorToken(Operator::Divide)),
-            "/=" => Ok(Self::OperatorToken(Operator::DivAssign)),
-            "%" => Ok(Self::OperatorToken(Operator::Modulus)),
-            "%=" => Ok(Self::OperatorToken(Operator::ModAssign)),
-            "&" => Ok(Self::OperatorToken(Operator::BitAnd)),
-            "&=" => Ok(Self::OperatorToken(Operator::BitAndAssign)),
-            "|" => Ok(Self::OperatorToken(Operator::BitOr)),
-            "|=" => Ok(Self::OperatorToken(Operator::BitOrAssign)),
-            "&&" => Ok(Self::OperatorToken(Operator::And)),
-            "||" => Ok(Self::OperatorToken(Operator::Or)),
-            "!" => Ok(Self::OperatorToken(Operator::Not)),
-            "==" => Ok(Self::OperatorToken(Operator::Equal)),
-            "!=" => Ok(Self::OperatorToken(Operator::NotEqual)),
-            "<" => Ok(Self::OperatorToken(Operator::LessThan)),
-            ">" => Ok(Self::OperatorToken(Operator::GreaterThan)),
-            "<=" => Ok(Self::OperatorToken(Operator::LessThanEqual)),
-            ">=" => Ok(Self::OperatorToken(Operator::GreaterThanEqual)),
-            "(" => Ok(Self::BracketToken(Bracket::RoundOpen)),
-            ")" => Ok(Self::BracketToken(Bracket::RoundClose)),
-            "[" => Ok(Self::BracketToken(Bracket::SquareOpen)),
-            "]" => Ok(Self::BracketToken(Bracket::SquareClose)),
-            "{" => Ok(Self::BracketToken(Bracket::CurlyOpen)),
-            "}" => Ok(Self::BracketToken(Bracket::CurlyClose)),
-            ";" => Ok(Self::SymbolToken(Symbol::End)),
-            "," => Ok(Self::SymbolToken(Symbol::Seperator)),
-            "." => Ok(Self::SymbolToken(Symbol::Get)),
-            other => Ok(Self::LiteralToken(Literal::try_from(other)?)),
-        }
-    }
-}
-
-fn tokeniser(file: &str) -> Vec<Token> {
-    let mut iterator = file.chars().peekable();
-
-    let mut tokens = Vec::new();
-    let mut current_token = String::new();
-
-    let mut in_char = false;
-    let mut prev_chr = '\u{0}';
-
-    while let Some(i) = iterator.next() {
-        if i.is_whitespace() && !in_char {
-            if !current_token.is_empty() {
-                tokens.push(current_token.as_str().try_into().unwrap());
-                current_token.clear();
-            }
-
-            continue;
-        }
-
-        current_token.push(i);
-
-        match i {
-            '\'' => {
-                if in_char && prev_chr != '\\' {
-                    tokens.push(current_token.as_str().try_into().unwrap());
-
-                    current_token.clear();
-                    in_char = false;
-                } else {
-                    in_char = true;
-                }
-
-                continue;
-            }
-
-            '-' => {
-                if let (Some(Token::LiteralToken(_)), Some(i)) = (tokens.last(), iterator.peek()) {
-                    if i.is_ascii_alphanumeric() {
-                        tokens.push(current_token.as_str().try_into().unwrap());
-                        current_token.clear();
-                    }
-                }
-            }
-
-            '.' => {
-                if let (Some(i), Some(j)) = (tokens.last(), iterator.peek()) {
-                    let valid = match i {
-                        Token::BracketToken(Bracket::RoundClose) => true,
-                        Token::LiteralToken(Literal::Identifier(_)) => true,
-                        _ => false,
-                    };
-
-                    if valid && j.is_ascii_alphabetic() {
-                        tokens.push(current_token.as_str().try_into().unwrap());
-                        current_token.clear();
-                    }
-                }
-            }
-
-            _ => (),
-        }
-
-        if !in_char {
-            if Token::try_from(current_token.as_str()).is_err() {
-                println!("{current_token:?}");
-                current_token.pop();
-
-                tokens.push(current_token.as_str().try_into().unwrap());
-                current_token.clear();
-
-                if i != ' ' {
-                    current_token.push(i);
-                }
-            }
-        }
-        prev_chr = i;
+        assert_eq!(
+            tokens,
+            vec![
+                Token::KeywordToken(Keyword::SignedInteger32),
+                Token::LiteralToken(Literal::Identifier(Box::from("main"))),
+                Token::BracketToken(Bracket::RoundOpen),
+                Token::BracketToken(Bracket::RoundClose),
+                Token::BracketToken(Bracket::CurlyOpen),
+                Token::KeywordToken(Keyword::SignedInteger8),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Integer(1)),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::SignedInteger16),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Integer(-3)),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::SignedInteger32),
+                Token::LiteralToken(Literal::Identifier(Box::from("c"))),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::SignedInteger64),
+                Token::LiteralToken(Literal::Identifier(Box::from("d"))),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::UnsignedInteger8),
+                Token::LiteralToken(Literal::Identifier(Box::from("e"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Integer(1)),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::UnsignedInteger16),
+                Token::LiteralToken(Literal::Identifier(Box::from("f"))),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::UnsignedInteger32),
+                Token::LiteralToken(Literal::Identifier(Box::from("g"))),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::UnsignedInteger64),
+                Token::LiteralToken(Literal::Identifier(Box::from("h"))),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::Float32),
+                Token::LiteralToken(Literal::Identifier(Box::from("i"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Float(7.8)),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::Float64),
+                Token::LiteralToken(Literal::Identifier(Box::from("j"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Float(-4.5)),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::Character),
+                Token::LiteralToken(Literal::Identifier(Box::from("k"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Character('\n')),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::Character),
+                Token::LiteralToken(Literal::Identifier(Box::from("l"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Character('r')),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::Boolean),
+                Token::LiteralToken(Literal::Identifier(Box::from("m"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::KeywordToken(Keyword::True),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::Boolean),
+                Token::LiteralToken(Literal::Identifier(Box::from("n"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::KeywordToken(Keyword::False),
+                Token::SymbolToken(Symbol::End),
+                Token::BracketToken(Bracket::CurlyClose),
+            ]
+        );
     }
 
-    if !current_token.is_empty() {
-        tokens.push(current_token.as_str().try_into().unwrap());
+    #[test]
+    fn operators() {
+        let buffer = read_to_string("./tests/test2.alim").unwrap();
+        let tokens = tokeniser::tokeniser(&buffer);
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::LessThan),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::LessThanEqual),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::GreaterThan),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::GreaterThanEqual),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Equal),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::NotEqual),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Add),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Subtract),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::AddAssign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::SubAssign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Multiply),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::MulAssign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Divide),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::DivAssign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Modulus),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::ModAssign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::BitAnd),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::BitAndAssign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::BitOr),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::BitOrAssign),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::And),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+                Token::OperatorToken(Operator::Or),
+                Token::LiteralToken(Literal::Identifier(Box::from("b"))),
+                Token::OperatorToken(Operator::Not),
+                Token::LiteralToken(Literal::Identifier(Box::from("a"))),
+            ]
+        );
     }
 
-    tokens
-}
+    #[test]
+    fn brackets() {
+        let buffer = read_to_string("./tests/test3.alim").unwrap();
+        let tokens = tokeniser::tokeniser(&buffer);
 
-fn main() {
-    let buffer = read_to_string("./main.alim").unwrap();
-    let tokens = tokeniser(&buffer);
-    println!("{:#?}", tokens);
+        assert_eq!(
+            tokens,
+            vec![
+                Token::BracketToken(Bracket::RoundOpen),
+                Token::BracketToken(Bracket::RoundClose),
+                Token::BracketToken(Bracket::SquareOpen),
+                Token::BracketToken(Bracket::SquareClose),
+                Token::BracketToken(Bracket::CurlyOpen),
+                Token::BracketToken(Bracket::CurlyClose),
+            ]
+        );
+    }
 }

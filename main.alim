@@ -1,9 +1,0 @@
-struct Abc {
-	char b;
-}
-
-i32 main() {
-	Abc def = Abc { b = 'c' };
-	print(def.b);
-	return 0;
-}
