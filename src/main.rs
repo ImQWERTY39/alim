@@ -195,4 +195,57 @@ mod test {
             ]
         );
     }
+
+    #[test]
+    fn struct_and_string() {
+        let buffer = read_to_string("./tests/test4.alim").unwrap();
+        let tokens = tokeniser::tokeniser(&buffer);
+
+        assert_eq!(
+            tokens,
+            vec![
+                Token::KeywordToken(Keyword::Import),
+                Token::LiteralToken(Literal::Identifier(Box::from("math"))),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::Struct),
+                Token::LiteralToken(Literal::Identifier(Box::from("Person"))),
+                Token::BracketToken(Bracket::CurlyOpen),
+                Token::KeywordToken(Keyword::Character),
+                Token::BracketToken(Bracket::SquareOpen),
+                Token::LiteralToken(Literal::Integer(40)),
+                Token::BracketToken(Bracket::SquareClose),
+                Token::LiteralToken(Literal::Identifier(Box::from("name"))),
+                Token::SymbolToken(Symbol::End),
+                Token::KeywordToken(Keyword::UnsignedInteger8),
+                Token::LiteralToken(Literal::Identifier(Box::from("age"))),
+                Token::SymbolToken(Symbol::End),
+                Token::BracketToken(Bracket::CurlyClose),
+                Token::KeywordToken(Keyword::SignedInteger32),
+                Token::LiteralToken(Literal::Identifier(Box::from("main"))),
+                Token::BracketToken(Bracket::RoundOpen),
+                Token::BracketToken(Bracket::RoundClose),
+                Token::BracketToken(Bracket::CurlyOpen),
+                Token::LiteralToken(Literal::Identifier(Box::from("Person"))),
+                Token::LiteralToken(Literal::Identifier(Box::from("p"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Identifier(Box::from("Person"))),
+                Token::BracketToken(Bracket::CurlyOpen),
+                Token::LiteralToken(Literal::Identifier(Box::from("name"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Array(vec![
+                    Literal::Character('a'),
+                    Literal::Character('b'),
+                    Literal::Character('c'),
+                ])),
+                Token::SymbolToken(Symbol::Seperator),
+                Token::LiteralToken(Literal::Identifier(Box::from("age"))),
+                Token::OperatorToken(Operator::Assign),
+                Token::LiteralToken(Literal::Integer(10)),
+                Token::SymbolToken(Symbol::Seperator),
+                Token::BracketToken(Bracket::CurlyClose),
+                Token::SymbolToken(Symbol::End),
+                Token::BracketToken(Bracket::CurlyClose),
+            ]
+        );
+    }
 }
