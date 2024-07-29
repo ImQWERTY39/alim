@@ -20,6 +20,7 @@ pub enum Type {
     Struct(Identifier),
 }
 
+#[derive(Clone)]
 pub enum Value {
     Null(Type),
     I8(i8),
