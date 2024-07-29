@@ -3,7 +3,7 @@ pub enum Literal {
     Integer(i128),
     Float(f64),
     Character(char),
-    Array(Vec<Literal>),
+    String(Box<str>),
     Identifier(Box<str>),
 }
 
@@ -32,16 +32,8 @@ impl TryFrom<&str> for Literal {
             } else {
                 Err(())
             }
-        } else if value.starts_with('[') && value.ends_with(']') {
-            todo!()
-            // parse_array(value[1..value.len() - 1])
         } else if value.starts_with('"') && value.ends_with('"') {
-            Ok(Literal::Array(
-                value[1..value.len() - 1]
-                    .chars()
-                    .map(|x| Literal::Character(x))
-                    .collect(),
-            ))
+            Ok(Literal::String(value[1..value.len() - 1].into()))
         } else {
             let mut valid_first_character: Vec<char> = ('A'..='Z').chain('a'..='z').collect();
             valid_first_character.push('_');

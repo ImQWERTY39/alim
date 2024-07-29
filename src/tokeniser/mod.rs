@@ -62,7 +62,7 @@ pub fn tokeniser(file: &str) -> Vec<Token> {
             }
 
             '-' => {
-                if let (Some(Token::LiteralToken(_)), Some(i)) = (tokens.last(), iterator.peek()) {
+                if let (Some(Token::Literal(_)), Some(i)) = (tokens.last(), iterator.peek()) {
                     if i.is_ascii_alphanumeric() {
                         tokens.push(current_token.as_str().try_into().unwrap());
                         current_token.clear();
@@ -73,11 +73,8 @@ pub fn tokeniser(file: &str) -> Vec<Token> {
 
             '.' => {
                 if let (Some(i), Some(j)) = (tokens.last(), iterator.peek()) {
-                    let valid = match i {
-                        Token::BracketToken(Bracket::RoundClose) => true,
-                        Token::LiteralToken(Literal::Identifier(_)) => true,
-                        _ => false,
-                    };
+                    let valid = matches!(i, Token::Bracket(Bracket::RoundClose))
+                        || matches!(i, Token::Literal(Literal::Identifier(_)));
 
                     if valid && j.is_ascii_alphabetic() {
                         tokens.push(current_token.as_str().try_into().unwrap());
